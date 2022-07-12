@@ -7,6 +7,9 @@
     <sql id="selectFields">
         id, user_id, title, content, type, status, create_time, comment_count, score
     </sql>
+    <sql id="insertFields">
+        user_id, title, content, type, status, create_time, comment_count, score
+    </sql>
 
     <!--  if标签里是判断是否拼接到结果中，如果传入userId不为0，则在表中查找对应结果拼接到查找的结果集合中  -->
     <select id="selectDiscussPosts" resultType="DiscussPost">
@@ -28,5 +31,21 @@
             AND user_id = #{userId}
         </if>
     </select>
+
+    <insert id="insertDiscussPost" parameterType="DiscussPost">
+        INSERT INTO discuss_post(<include refid="insertFields"></include>)
+        VALUES (#{userId}, #{title}, #{content}, #{type}, #{status}, #{createTime}, #{commentCount}, #{score})
+    </insert>
+
+    <select id="selectDiscussPostById" resultType="DiscussPost">
+        SELECT <include refid="selectFields"></include>
+        FROM discuss_post
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateCommentCountById" parameterType="int">
+        UPDATE discuss_post SET comment_count = #{commentCount}
+        WHERE id = #{id}
+    </update>
 
 </mapper>

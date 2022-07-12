@@ -11,7 +11,7 @@
 <body>	
 	<div class="nk-container">
 		<!-- 头部 -->
-		<header class="bg-dark sticky-top">
+		<header class="bg-dark sticky-top" th:fragment="header">
 			<div class="container">
 				<!-- 导航 -->
 				<nav class="navbar navbar-expand-lg navbar-dark">
@@ -24,27 +24,27 @@
 					<div class="collapse navbar-collapse" id="navbarSupportedContent">
 						<ul class="navbar-nav mr-auto">
 							<li class="nav-item ml-3 btn-group-vertical">
-								<a class="nav-link" href="index.html">首页</a>
+								<a class="nav-link" th:href="@{/home/index}">首页</a>
 							</li>
-							<li class="nav-item ml-3 btn-group-vertical">
-								<a class="nav-link position-relative" href="site/letter.html">消息<span class="badge badge-danger">12</span></a>
+							<li class="nav-item ml-3 btn-group-vertical" th:if="${loginUser!=null}">
+								<a class="nav-link position-relative" th:href="@{/message/list}">消息<span class="badge badge-danger">12</span></a>
 							</li>
-							<li class="nav-item ml-3 btn-group-vertical">
-								<a class="nav-link" href="site/register.html">注册</a>
+							<li class="nav-item ml-3 btn-group-vertical" th:if="${loginUser==null}">
+								<a class="nav-link" th:href="@{/register}">注册</a>
 							</li>
-							<li class="nav-item ml-3 btn-group-vertical">
-								<a class="nav-link" href="site/login.html">登录</a>
+							<li class="nav-item ml-3 btn-group-vertical" th:if="${loginUser==null}">
+								<a class="nav-link" th:href="@{/login}">登录</a>
 							</li>
-							<li class="nav-item ml-3 btn-group-vertical dropdown">
+							<li class="nav-item ml-3 btn-group-vertical dropdown" th:if="${loginUser!=null}">
 								<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-									<img src="http://images.nowcoder.com/head/1t.png" class="rounded-circle" style="width:30px;"/>
+									<img th:src="${loginUser.headerUrl}" class="rounded-circle" style="width:30px;"/>
 								</a>
 								<div class="dropdown-menu" aria-labelledby="navbarDropdown">
 									<a class="dropdown-item text-center" href="site/profile.html">个人主页</a>
-									<a class="dropdown-item text-center" href="site/setting.html">账号设置</a>
-									<a class="dropdown-item text-center" href="site/login.html">退出登录</a>
+									<a class="dropdown-item text-center" th:href="@{/user/setting}">账号设置</a>
+									<a class="dropdown-item text-center" th:href="@{/logout}">退出登录</a>
 									<div class="dropdown-divider"></div>
-									<span class="dropdown-item text-center text-secondary">nowcoder</span>
+									<span class="dropdown-item text-center text-secondary" th:utext="${loginUser.username}">nowcoder</span>
 								</div>
 							</li>
 						</ul>
@@ -71,7 +71,7 @@
 							<a class="nav-link" href="#">最热</a>
 						</li>
 					</ul>
-					<button type="button" class="btn btn-primary btn-sm position-absolute rt-0" data-toggle="modal" data-target="#publishModal">我要发布</button>
+					<button type="button" class="btn btn-primary btn-sm position-absolute rt-0" data-toggle="modal" data-target="#publishModal" th:if="${loginUser!=null}">我要发布</button>
 				</div>
 				<!-- 弹出框 -->
 				<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true">
@@ -124,7 +124,7 @@
 						</a>
 						<div class="media-body">
 							<h6 class="mt-0 mb-3">
-								<a href="#" th:utext="${map.post.title}">备战春招，面试刷题跟他复习，一个月全搞定！</a>
+								<a th:href="@{|/discuss/detail/${map.post.id}|}" th:utext="${map.post.title}">备战春招，面试刷题跟他复习，一个月全搞定！</a>
 								<span class="badge badge-secondary bg-primary" th:if="${map.post.type==1}">置顶</span>
 								<span class="badge badge-secondary bg-danger" th:if="${map.post.status==1}">精华</span>
 							</h6>
@@ -133,14 +133,14 @@
 								<ul class="d-inline float-right">
 									<li class="d-inline ml-2">赞 11</li>
 									<li class="d-inline ml-2">|</li>
-									<li class="d-inline ml-2">回帖 7</li>
+									<li class="d-inline ml-2" >回帖 <span th:text="${map.post.commentCount}">7</span></li>
 								</ul>
 							</div>
 						</div>						
 					</li>
 				</ul>
 				<!-- 分页 -->
-				<nav class="mt-5" th:if="${page.rows>0}">
+				<nav class="mt-5" th:if="${page.rows>0}" th:fragment="pagination">
 					<ul class="pagination justify-content-center">
 						<li class="page-item">
 							<!-- th:href表示动态路径，page.path为/index，这里意思是/index?current=1-->
@@ -155,7 +155,7 @@
 						<li th:class="|page-item ${i==page.current?'active':''}|" th:each="i:${#numbers.sequence(page.from,page.to)}">
 							<a class="page-link" th:text="${i}">1</a>
 						</li>
-						<li th:class="|page-item ${page.current==page.total?'disable':''}|">
+						<li th:class="|page-item ${page.current==page.total?'disabled':''}|">
 							<a class="page-link" th:href="@{${page.path}(current=${page.current+1})}">下一页</a>
 						</li>
 						<li class="page-item">
@@ -167,7 +167,7 @@
 		</div>
 
 		<!-- 尾部 -->
-		<footer class="bg-dark">
+		<footer class="bg-dark" th:fragment="tailer">
 			<div class="container">
 				<div class="row">
 					<!-- 二维码 -->
@@ -207,13 +207,13 @@
 							<div class="col">
 								<ul class="nav btn-group-vertical company-info">
 									<li class="nav-item text-white-50">
-										公司地址：北京市朝阳区大屯路东金泉时代3-2708北京牛客科技有限公司
+										公司地址：深圳市南山区西丽街道2333小小鑫鑫科技技术有限公司
 									</li>
 									<li class="nav-item text-white-50">
-										联系方式：010-60728802(电话)&nbsp;&nbsp;&nbsp;&nbsp;admin@nowcoder.com
+										联系方式：010-23333333(电话)&nbsp;&nbsp;&nbsp;&nbsp;23333333@gmail.com
 									</li>
 									<li class="nav-item text-white-50">
-										牛客科技©2018 All rights reserved
+										小鑫科技©2018 All rights reserved
 									</li>
 									<li class="nav-item text-white-50">
 										京ICP备14055008号-4 &nbsp;&nbsp;&nbsp;&nbsp;

@@ -32,4 +32,26 @@ public interface DiscussPostMapper {
      */
     int selectDiscussPostRows(@Param("userId") int userId);
 
+    /**
+     * 插入帖子的方法
+     * @param discussPost 帖子对象
+     * @return 返回修改的行数
+     */
+    int insertDiscussPost(DiscussPost discussPost);
+
+    /**
+     * 根据id查询帖子内容，这里的id不是用户id(userId)，
+     * 因为在首页显示帖子时已经查找了帖子集合，可以直接获取里面的id，再通过id查找帖子内容
+     * @param id id
+     * @return 返回查找的帖子
+     */
+    DiscussPost selectDiscussPostById(int id);
+
+    /**
+     * 更新帖子的评论数量
+     * @param id id
+     * @return 放回修改的行数
+     */
+    int updateCommentCountById(int id, int commentCount);
+
 }

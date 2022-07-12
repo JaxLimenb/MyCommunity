@@ -1,14 +1,18 @@
 package com.nowcoder.mycommunity.controller;
 
 import com.nowcoder.mycommunity.service.AlphaService;
+import com.nowcoder.mycommunity.util.MyCommunityConstant;
+import com.nowcoder.mycommunity.util.MyCommunityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Array;
@@ -159,5 +163,56 @@ public class AlphaController {
         return list;
     }
 
+    // 会话管理
+    @RequestMapping(path = "/cookie/set", method = RequestMethod.GET)
+    @ResponseBody
+    public String setCookie(HttpServletResponse response) {
+        // 创建cookie
+        Cookie cookie = new Cookie("code", MyCommunityUtil.getRandomString());
+        // 设置cookie生效的范围
+        cookie.setPath("/mycommunity/alpha");
+        // 设置cookie的生存时间
+        cookie.setMaxAge(60 * 10);
+        // 发送cookie
+        response.addCookie(cookie);
 
+        return "set cookie";
+    }
+
+    @RequestMapping(path = "/cookie/get", method = RequestMethod.GET)
+    @ResponseBody
+    public String getCookie(@CookieValue("code") String code) {
+        System.out.println(code);
+        return "get cookie";
+    }
+
+    @RequestMapping(path = "/session/set", method = RequestMethod.GET)
+    @ResponseBody
+    public String setSession(HttpSession session) {
+        session.setAttribute("id", 1);
+        session.setAttribute("name", "test");
+        return "set session";
+    }
+
+    @RequestMapping(path = "/session/get", method = RequestMethod.GET)
+    @ResponseBody
+    public String getSession(HttpSession session) {
+        Enumeration<String> names = session.getAttributeNames();
+        while (names.hasMoreElements()) {
+            String key = names.nextElement();
+            System.out.println(key + ": " + session.getAttribute(key));
+        }
+//        System.out.println(session.getAttribute("id"));
+//        System.out.println(session.getAttribute("name"));
+        return "get session";
+    }
+
+    // ajax示例（异步请求）
+    @RequestMapping(path = "/ajax", method = RequestMethod.POST)
+    @ResponseBody
+    public String testAjax(String name, int age) {
+        System.out.println(name);
+        System.out.println(age);
+        return MyCommunityUtil.getJSONString(0, "操作成功");
+    }
 }
