@@ -1,11 +1,10 @@
 package com.nowcoder.mycommunity.controller;
 
-import com.nowcoder.mycommunity.entity.Comment;
-import com.nowcoder.mycommunity.entity.DiscussPost;
-import com.nowcoder.mycommunity.entity.Page;
-import com.nowcoder.mycommunity.entity.User;
+import com.nowcoder.mycommunity.entity.*;
+import com.nowcoder.mycommunity.event.EventProducer;
 import com.nowcoder.mycommunity.service.CommentService;
 import com.nowcoder.mycommunity.service.DiscussPostService;
+import com.nowcoder.mycommunity.service.LikeService;
 import com.nowcoder.mycommunity.service.UserService;
 import com.nowcoder.mycommunity.util.HostHolder;
 import com.nowcoder.mycommunity.util.MyCommunityConstant;
@@ -37,6 +36,10 @@ public class DiscussPostController implements MyCommunityConstant {
     private CommentService commentService;
     @Autowired
     private HostHolder hostHolder;
+    @Autowired
+    private LikeService likeService;
+    @Autowired
+    private EventProducer eventProducer;
 
     @RequestMapping(path = "/add", method = RequestMethod.POST)
     @ResponseBody
@@ -46,7 +49,20 @@ public class DiscussPostController implements MyCommunityConstant {
             return MyCommunityUtil.getJSONString(403, "你还没有登录！");
         }
         // 发布帖子，存入数据库
-        discussPostService.publish(title, content, user.getId());
+        DiscussPost post = new DiscussPost();
+        post.setUserId(user.getId());
+        post.setTitle(title);
+        post.setContent(content);
+        post.setCreateTime(new Date());
+        // 过滤敏感词并存入数据库
+        discussPostService.addDiscussPost(post);
+        // 发布成功后，触发发帖事件，将新帖子存入ES里
+        Event event = new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(user.getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(post.getId());
+        eventProducer.fireEvent(event);
         // 报错的情况，将来统一处理
         return MyCommunityUtil.getJSONString(0, "发布成功！");
     }
@@ -59,6 +75,18 @@ public class DiscussPostController implements MyCommunityConstant {
         User user = userService.findUserById(post.getUserId());
         model.addAttribute("post", post);
         model.addAttribute("user", user);
+        // 获取帖子的点赞数量
+        long postLikeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, post.getId());
+        model.addAttribute("postLikeCount", postLikeCount);
+        // 获取帖子点赞状态
+        User holderUser = hostHolder.getUser();
+        int postLikeStatus;
+        if (holderUser == null) {
+            postLikeStatus = 0;
+        }else {
+            postLikeStatus = likeService.findEntityLikeStatus(holderUser.getId(), ENTITY_TYPE_POST, discussPostId);
+        }
+        model.addAttribute("postLikeStatus", postLikeStatus);
         // 获取评论信息
         page.setLimit(5);
         page.setRows(post.getCommentCount());
@@ -74,6 +102,17 @@ public class DiscussPostController implements MyCommunityConstant {
                 commentVo.put("comment", comment);
                 // 评论者
                 commentVo.put("user", userService.findUserById(comment.getUserId()));
+                // 点赞数量
+                long commentLikeCount = likeService.findEntityLikeCount(ENTITY_TYPE_COMMENT, comment.getId());
+                commentVo.put("commentLikeCount", commentLikeCount);
+                // 点赞状态
+                int commentLikeStatus;
+                if (holderUser == null) {
+                    commentLikeStatus = 0;
+                }else {
+                    commentLikeStatus = likeService.findEntityLikeStatus(holderUser.getId(), ENTITY_TYPE_COMMENT, comment.getId());
+                }
+                commentVo.put("commentLikeStatus", commentLikeStatus);
                 // 回复数量
                 int replyCount = commentService.findCommentsCount(ENTITY_TYPE_COMMENT, comment.getId());
                 commentVo.put("replyCount", replyCount);
@@ -90,6 +129,18 @@ public class DiscussPostController implements MyCommunityConstant {
                         // 回复的目标评论作者
                         User target = reply.getTargetId() == 0 ? null : userService.findUserById(reply.getTargetId());
                         replyVo.put("target", target);
+                        // 回复的点赞数量
+                        long replyLikeCount = likeService.findEntityLikeCount(ENTITY_TYPE_COMMENT, reply.getId());
+                        replyVo.put("replyLikeCount", replyLikeCount);
+                        // 回复的点赞状态
+                        // 点赞状态
+                        int replyLikeStatus;
+                        if (holderUser == null) {
+                            replyLikeStatus = 0;
+                        }else {
+                            replyLikeStatus = likeService.findEntityLikeStatus(holderUser.getId(), ENTITY_TYPE_COMMENT, reply.getId());
+                        }
+                        replyVo.put("replyLikeStatus", replyLikeStatus);
                         replyVoList.add(replyVo);
                     }
                 }

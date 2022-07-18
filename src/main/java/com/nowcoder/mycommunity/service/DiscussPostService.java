@@ -45,7 +45,7 @@ public class DiscussPostService {
      * @param post
      * @return
      */
-    private int addDiscussPost(DiscussPost post) {
+    public int addDiscussPost(DiscussPost post) {
         if (post == null) {
             throw new IllegalArgumentException("帖子参数不能为空，发表帖子失败！");
         }
@@ -58,23 +58,5 @@ public class DiscussPostService {
 
         return discussPostMapper.insertDiscussPost(post);
     }
-
-    /**
-     * 发布帖子
-     * @param title 标题
-     * @param content 正文
-     * @param userId 用户id
-     * @return 返回修改行数
-     */
-    public int publish(String title, String content, int userId) {
-        DiscussPost post = new DiscussPost();
-        post.setUserId(userId);
-        post.setTitle(title);
-        post.setContent(content);
-        post.setCreateTime(new Date());
-        // 过滤敏感词并存入数据库
-        return addDiscussPost(post);
-    }
-
 
 }

@@ -7,7 +7,7 @@
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
 	<link rel="stylesheet" th:href="@{/css/global.css}" />
 	<link rel="stylesheet" th:href="@{/css/letter.css}" />
-	<title>鑫鑫的牛客网社区项目-私信详情</title>
+	<title>小小鑫鑫的牛客网社区-私信详情</title>
 </head>
 <body>
 	<div class="nk-container">
@@ -117,7 +117,7 @@
 				<!-- 私信列表 -->
 				<ul class="list-unstyled mt-4">
 					<li class="media pb-3 pt-3 mb-2" th:each="let:${letters}">
-						<a href="profile.html">
+						<a th:href="@{|/user/profile/${let.fromUser.id}|}">
 							<img th:src="${let.fromUser.headerUrl}" class="mr-4 rounded-circle user-header" alt="用户头像" >
 						</a>
 						<div class="toast show d-lg-block" role="alert" aria-live="assertive" aria-atomic="true">

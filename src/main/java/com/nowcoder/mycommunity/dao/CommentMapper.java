@@ -20,6 +20,8 @@ public interface CommentMapper {
 
     int insertComment(Comment comment);
 
+    Comment selectCommentById(int id);
+
     Comment selectCommentByTargetId(int targetId);
 
     Comment selectCommentByEntityId(int entityId);

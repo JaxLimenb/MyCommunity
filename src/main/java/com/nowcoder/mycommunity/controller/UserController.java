@@ -1,9 +1,13 @@
 package com.nowcoder.mycommunity.controller;
 
 import com.nowcoder.mycommunity.annotation.LoginRequired;
+import com.nowcoder.mycommunity.entity.Page;
 import com.nowcoder.mycommunity.entity.User;
+import com.nowcoder.mycommunity.service.FollowService;
+import com.nowcoder.mycommunity.service.LikeService;
 import com.nowcoder.mycommunity.service.UserService;
 import com.nowcoder.mycommunity.util.HostHolder;
+import com.nowcoder.mycommunity.util.MyCommunityConstant;
 import com.nowcoder.mycommunity.util.MyCommunityUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -23,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +37,7 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements MyCommunityConstant {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
@@ -47,13 +52,19 @@ public class UserController {
     private UserService userService;
     @Autowired
     private HostHolder hostHolder;
+    @Autowired
+    private LikeService likeService;
+    @Autowired
+    private FollowService followService;
 
+    // 账号设置
     @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
     public String getSettingPage() {
         return "site/setting";
     }
 
+    // 设置里面更新头像
     @LoginRequired
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
     public String uploadHeader(MultipartFile headerImage, Model model) {
@@ -88,6 +99,7 @@ public class UserController {
         return "redirect:/home/index";
     }
 
+    // 获取头像
     @RequestMapping(path = "/header/{fileName}", method = RequestMethod.GET)
     public void getHeader(@PathVariable("fileName") String fileName, HttpServletResponse response) {
         fileName = uploadPicturePath + "/" + fileName;
@@ -117,6 +129,7 @@ public class UserController {
         }
     }
 
+    // 设置里面更新密码
     @LoginRequired
     @RequestMapping(path = "/update", method = RequestMethod.POST)
     public String updatePassword(Model model, String oldPassword, String newPassword, String confirmPassword) {
@@ -133,5 +146,88 @@ public class UserController {
             model.addAttribute("confirmPasswordMsg", map.get("confirmPasswordMsg"));
             return "site/setting";
         }
+    }
+
+    // 个人主页
+    @RequestMapping(path = "/profile/{userId}", method = RequestMethod.GET)
+    public String getProfilePage(@PathVariable("userId") int userId, Model model) {
+        User user = userService.findUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("该用户不存在！");
+        }
+        // 将用户基本信息传给页面
+        model.addAttribute("user", user);
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount", likeCount);
+        // 获取当前主页的用户的关注数量
+        long followeeCount = followService.getFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+        // 获取当前主页的用户的粉丝数量
+        long followerCount = followService.getFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 获取登录的用户是否已关注当前主页用户
+        boolean isFollowed = false;
+        if (hostHolder.getUser() != null) {
+            isFollowed = followService.isFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("isFollowed", isFollowed);
+
+        return "site/profile";
+    }
+
+    @RequestMapping(path = "/followees/{userId}", method = RequestMethod.GET)
+    public String getFollowees(@PathVariable("userId") int userId, Model model, Page page) {
+        User user = userService.findUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("该用户不存在！");
+        }
+        model.addAttribute("user", user);
+        page.setLimit(5);
+        page.setPath("/user/followees/" + userId);
+        page.setRows((int) followService.getFolloweeCount(userId, ENTITY_TYPE_USER));
+        List<Map<String, Object>> followees = followService.getFollowees(userId, page.getOffset(), page.getLimit());
+        if (followees != null) {
+            for (Map<String, Object> map : followees) {
+                // 获取登录的用户是否已关注当前主页用户
+                boolean isFollowed = false;
+                if (hostHolder.getUser() != null) {
+                    User followee = (User) map.get("followee");
+                    if (followee != null) {
+                        isFollowed = followService.isFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, followee.getId());
+                    }
+                }
+                map.put("isFollowed", isFollowed);
+            }
+        }
+        model.addAttribute("followees", followees);
+
+        return "site/followee";
+    }
+
+    @RequestMapping(path = "/followers/{userId}", method = RequestMethod.GET)
+    public String getFollowers(@PathVariable("userId") int userId, Model model, Page page) {
+        User user = userService.findUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("该用户不存在！");
+        }
+        model.addAttribute("user", user);
+        page.setLimit(5);
+        page.setPath("/user/followers/" + userId);
+        page.setRows((int) followService.getFollowerCount(ENTITY_TYPE_USER, userId));
+        List<Map<String, Object>> followers = followService.getFollowers(userId, page.getOffset(), page.getLimit());
+        for (Map<String, Object> map : followers) {
+            // 获取登录的用户是否已关注当前主页用户
+            boolean isFollowed = false;
+            if (hostHolder.getUser() != null) {
+                User follower = (User) map.get("followee");
+                if (follower != null) {
+                    isFollowed = followService.isFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, follower.getId());
+                }
+            }
+            map.put("isFollowed", isFollowed);
+        }
+        model.addAttribute("followers", followers);
+
+        return "site/follower";
     }
 }

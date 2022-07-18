@@ -43,6 +43,10 @@ public class CommentService implements MyCommunityConstant {
         return commentMapper.selectCountByEntity(entityType, entityId);
     }
 
+    public Comment findCommentById(int id) {
+        return commentMapper.selectCommentById(id);
+    }
+
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     public Map<String, Object> addComment(Comment comment) {
         if (comment == null) {

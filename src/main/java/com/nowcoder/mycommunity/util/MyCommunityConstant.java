@@ -25,4 +25,14 @@ public interface MyCommunityConstant {
     // 实体类型
     int ENTITY_TYPE_POST = 1; // 帖子
     int ENTITY_TYPE_COMMENT = 2; // 评论
+    int ENTITY_TYPE_USER = 3; // 用户
+
+    // 事件主题
+    String TOPIC_COMMENT = "comment";
+    String TOPIC_LIKE = "like";
+    String TOPIC_FOLLOW = "follow";
+    String TOPIC_PUBLISH = "publish";
+
+    // 系统用户id
+    int SYSTEM_USER_ID = 1;
 }

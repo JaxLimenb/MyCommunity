@@ -76,5 +76,56 @@
             #{id}
         </foreach>
     </update>
+
+    <select id="selectSystemMessage" resultType="Message">
+        SELECT <include refid="selectFields"></include>
+        FROM message
+        WHERE status != 2
+        AND from_id = 1
+        AND to_id = #{toId}
+        AND conversation_id = #{conversationId}
+    </select>
+
+    <select id="selectLatestNotice" resultType="Message">
+        SELECT <include refid="selectFields"></include>
+        FROM message
+        WHERE status != 2
+        AND from_id = 1
+        AND to_id = #{userId}
+        AND conversation_id = #{topic}
+        ORDER BY create_time DESC
+        LIMIT 0, 1
+    </select>
+
+    <select id="selectNoticeCount" resultType="int">
+        SELECT COUNT(id)
+        FROM message
+        WHERE status != 2
+        AND from_id = 1
+        AND to_id = #{userId}
+        AND conversation_id = #{topic}
+    </select>
+
+    <select id="selectNoticeUnreadCount" resultType="int">
+        SELECT COUNT(id)
+        FROM message
+        WHERE status = 0
+        AND from_id = 1
+        AND to_id = #{userId}
+        <if test="topic!=null">
+            AND conversation_id = #{topic}
+        </if>
+    </select>
     
+    <select id="selectNotices" resultType="Message">
+        SELECT <include refid="selectFields"></include>
+        FROM message
+        WHERE status != 2
+        AND from_id = 1
+        AND to_id = #{userId}
+        AND conversation_id = #{topic}
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
 </mapper>

@@ -35,6 +35,9 @@ public class ServiceLogAspect {
     public void before(JoinPoint joinPoint) {
         // 用户[1.2.3.4](ip地址)在[xxx](时间)，访问了[com.nowcoder.mycommunity.service.xxx()].
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return;
+        }
         HttpServletRequest request = attributes.getRequest();
         // 获取远程访问用户ip地址
         String ip = request.getRemoteHost();
